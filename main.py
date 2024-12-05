@@ -6,15 +6,20 @@ import sys
 import time
 
 # helpful: https://www.linuxdoc.org/HOWTO/Bash-Prompt-HOWTO-6.html
-green_ansi_code = '[32m'
+aging_ansi_codes = {
+    1: '[32m',  # green
+    2: '[33m',  # yellow
+    3: '[34m',  # blue
+    4: '[31m',  # red
+}
 reset_ansi_code = '[0m'
 
-ansi_map = {0: reset_ansi_code, 1: green_ansi_code}
-char_map = {0: ' ', 1: '*'}
+ansi_map = {0: reset_ansi_code}
+ansi_map.update(aging_ansi_codes)
+char_map = {0: ' ', 1: '*', 2: '*', 3: '*', 4: '*'}
 
 num_rows = 50
-num_cols = 50
-board = [[random.randint(0, 1) for _ in range(num_cols)] for _ in range(num_rows)]
+num_cols = 100
 
 def print_board(board):
   for row in board:
@@ -32,24 +37,34 @@ def check_neighbors(board, row_i, col_i):
   live_neighbors = 0
 
   num_rows = len(board)
-  num_cols = len(board[1])  # assume cols are same for each row
+  num_cols = len(board[0])  # assume cols are same for each row
 
-  for i in range(row_i - 1, row_i + 2): # 0,1,2
-    for j in range(col_i - 1, col_i + 2): # -1,0,1
+  for i in range(row_i - 1, row_i + 2):
+    for j in range(col_i - 1, col_i + 2):
       if row_i == i and col_i == j:
         continue
       if i < 0 or i > num_rows - 1:
         continue
       if j < 0 or j > num_cols - 1:
         continue
-      live_neighbors += is_alive(board[i][j])
+      live_neighbors += 1 if is_alive(board[i][j]) else 0
 
   return live_neighbors
 
 
 def is_alive(cell):
-  return cell == 1
+  return cell > 0
 
+def render_frame(board, user_input=False, delay=0):
+  print_board(board)
+  sys.stdout.flush()
+
+  if user_input:
+    input()
+  else:
+    time.sleep(delay)
+
+  os.system('cls' if os.name == 'nt' else 'clear')
 
 def run_iteration(board):
   # i think we need a new board since iterating over old board
@@ -63,22 +78,18 @@ def run_iteration(board):
       # modify state of cell if needed
       num_live_neighbors = check_neighbors(board, row_i, col_i)
 
-      # print("hihi", row_i, col_i, num_live_neighbors)
-
       if num_live_neighbors > 3 and is_alive(cell):
-        # if overpopulated and cell is live, kill cell
+        # kill cell if overpopulated
         new_board[row_i][col_i] = 0
-
-      if num_live_neighbors < 2 and is_alive(cell):
-        # underpopulated and cell is alive, kill cell
+      elif num_live_neighbors < 2 and is_alive(cell):
+        # kill cell if underpopulated
         new_board[row_i][col_i] = 0
-
-      if num_live_neighbors == 3 and not is_alive(cell):  # lol tyty! np i'm great at this lol <3
-        # dead cell comes back!!
+      elif is_alive(cell):
+        # cell lives on
+        new_board[row_i][col_i] = min(cell + 1, 4)
+      elif num_live_neighbors == 3 and not is_alive(cell):  # lol tyty! np i'm great at this lol <3
+        # new cell is born!!
         new_board[row_i][col_i] = 1
-
-      # else:
-        # print("hehe", new_board[row_i][col_i])
 
     # omg at this demo lol
     # have you seen that sad titanic flute meme
@@ -94,21 +105,17 @@ def run_iteration(board):
 if __name__ == '__main__':
   parser = argparse.ArgumentParser(description='conway\'s game of life')
   parser.add_argument('-u', '--user-input', action='store_true', help='prompt for user input before next iteration')
+  parser.add_argument('-d', '--delay', type=float, default=0.1, help='delay between frames in seconds')
   args = parser.parse_args()
 
   try:
+    board = [[random.randint(0, 1) for _ in range(num_cols)] for _ in range(num_rows)]
+
     os.system('cls' if os.name == 'nt' else 'clear')
+    render_frame(board, user_input=args.user_input, delay=args.delay)
 
     while True:
       board = run_iteration(board)
-      print_board(board)
-      sys.stdout.flush()
-
-      if args.user_input:
-        input()
-      else:
-        time.sleep(1)
-
-      os.system('cls' if os.name == 'nt' else 'clear')
+      render_frame(board, user_input=args.user_input, delay=args.delay)
   except KeyboardInterrupt:
     sys.exit(0)
