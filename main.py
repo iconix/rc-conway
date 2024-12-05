@@ -1,11 +1,24 @@
+import argparse
 from copy import deepcopy
+import os
+import random
+import sys
+import time
 
-board = [["1", "1", "0"], ["0", "1", "0"], ["0", "1", "1"]]
+# helpful: https://www.linuxdoc.org/HOWTO/Bash-Prompt-HOWTO-6.html
+green_ansi_code = '[32m'
+reset_ansi_code = '[0m'
 
+ansi_map = {0: reset_ansi_code, 1: green_ansi_code}
+char_map = {0: ' ', 1: '*'}
+
+num_rows = 50
+num_cols = 50
+board = [[random.randint(0, 1) for _ in range(num_cols)] for _ in range(num_rows)]
 
 def print_board(board):
   for row in board:
-    print(" ".join(row))
+    print(' '.join(map(lambda x: str(f"\033{ansi_map[x]}{char_map[x]}\033{reset_ansi_code}"), row)))
 
 
 # for each iteration of game
@@ -35,7 +48,7 @@ def check_neighbors(board, row_i, col_i):
 
 
 def is_alive(cell):
-  return cell == "1"
+  return cell == 1
 
 
 def run_iteration(board):
@@ -54,15 +67,15 @@ def run_iteration(board):
 
       if num_live_neighbors > 3 and is_alive(cell):
         # if overpopulated and cell is live, kill cell
-        new_board[row_i][col_i] = "0"
+        new_board[row_i][col_i] = 0
 
       if num_live_neighbors < 2 and is_alive(cell):
         # underpopulated and cell is alive, kill cell
-        new_board[row_i][col_i] = "0"
+        new_board[row_i][col_i] = 0
 
       if num_live_neighbors == 3 and not is_alive(cell):  # lol tyty! np i'm great at this lol <3
         # dead cell comes back!!
-        new_board[row_i][col_i] = "1"
+        new_board[row_i][col_i] = 1
 
       # else:
         # print("hehe", new_board[row_i][col_i])
@@ -77,16 +90,25 @@ def run_iteration(board):
 # ya let's do it! i guess we grab a virtual room..?
 # https://us06web.zoom.us/j/[redacted]
 # I'm in pairing room 2! ty! messaged you on zulip!!
-print_board(board)
 
-for _ in range(0, 5):
-  print()
-  print_board(run_iteration(board))
+if __name__ == '__main__':
+  parser = argparse.ArgumentParser(description='conway\'s game of life')
+  parser.add_argument('-u', '--user-input', action='store_true', help='prompt for user input before next iteration')
+  args = parser.parse_args()
 
-print()
-# print(check_neighbors(board, 1, 0))
+  try:
+    os.system('cls' if os.name == 'nt' else 'clear')
 
+    while True:
+      board = run_iteration(board)
+      print_board(board)
+      sys.stdout.flush()
 
-arr = [1,2,3,4,5]
+      if args.user_input:
+        input()
+      else:
+        time.sleep(1)
 
-print(arr[-6])
+      os.system('cls' if os.name == 'nt' else 'clear')
+  except KeyboardInterrupt:
+    sys.exit(0)
