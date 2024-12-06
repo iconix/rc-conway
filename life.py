@@ -1,4 +1,3 @@
-import argparse
 from copy import deepcopy
 from dataclasses import dataclass
 import os
@@ -41,7 +40,7 @@ def create_game(rows: int, cols: int, random_seed: int = None) -> Game:
 
 def print_cell(cell: int) -> str:
   """Print an appropriately colored cell based on its age."""
-  return str(f"\033{COLOR_CODES.get(cell, RESET_CODE)}{'*' if cell in COLOR_CODES else SPACE_CHAR}\033{RESET_CODE}")
+  return str(f"\033{COLOR_CODES.get(cell, RESET_CODE)}{CELL_CHAR if cell in COLOR_CODES else SPACE_CHAR}\033{RESET_CODE}")
 
 def print_game(game: Game) -> str:
   """Print current state of the game."""
@@ -129,6 +128,8 @@ def render_frame(game: Game, config: GameConfig):
 
 def parse_arguments() -> GameConfig:
   """Parse command line arguments."""
+  import argparse
+
   parser = argparse.ArgumentParser(description="conway's game of life with aging cells")
   parser.add_argument('-r', '--rows', type=int, default=DEFAULT_ROWS,
                     help='number of rows in the grid')

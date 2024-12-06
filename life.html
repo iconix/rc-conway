@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Conway's Game of Life</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/pico.css/1.5.6/pico.min.css">
+    <script type="module" src="https://pyscript.net/releases/2024.2.1/core.js" defer></script>
+    <style>
+        :root {
+            --primary-color: #4a9eff;
+            --background-dark: #1a1a1a;
+            --text-light: #ffffff;
+        }
+
+        body {
+            background-color: var(--background-dark);
+            color: var(--text-light);
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+
+        h1, p {
+            text-align: center;
+            color: var(--primary-color);
+            margin-bottom: 2rem;
+            text-shadow: 0 0 10px rgba(74, 158, 255, 0.3);
+        }
+
+        h1 {
+            font-size: 2.5rem;
+        }
+
+        a:visited {
+            color: var(--primary-color);
+        }
+
+        #game-ui {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 12px;
+            padding: 2rem;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        #controls {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+            margin-bottom: 2rem;
+            padding: 1rem;
+            background: rgba(0, 0, 0, 0.2);
+            border-radius: 8px;
+        }
+
+        .control-group {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+
+        .button-group {
+            display: flex;
+            gap: 0.5rem;
+            flex-wrap: wrap;
+        }
+
+        button {
+            background-color: var(--primary-color);
+            border: none;
+            padding: 0.5rem 1.5rem;
+            border-radius: 6px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        button:hover {
+            background-color: #357abd;
+            transform: translateY(-1px);
+        }
+
+        #next-step-btn {
+            display: none;
+            background-color: #28a745;
+        }
+
+        #next-step-btn:hover {
+            background-color: #218838;
+        }
+
+        #next-step-btn.visible {
+            display: inline-block;
+        }
+
+        #reset-btn {
+            background-color: #dc3545;
+        }
+
+        #reset-btn:hover {
+            background-color: #c82333;
+        }
+
+        input[type="number"] {
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 4px;
+            padding: 0.5rem;
+            color: var(--text-light);
+            width: 100px;
+        }
+
+        input[type="checkbox"] {
+            margin-right: 0.5rem;
+        }
+
+        label {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        #game-container {
+            font-family: monospace;
+            white-space: pre;
+            line-height: 1;
+            background-color: rgba(0, 0, 0, 0.8);
+            padding: 2rem;
+            border-radius: 8px;
+            box-shadow: inset 0 0 20px rgba(0, 0, 0, 0.5);
+            margin: 0 auto;
+            text-align: center;
+            overflow: auto;
+        }
+
+        .cell-0 { color: transparent; }
+        .cell-1 { color: #00ff00; text-shadow: 0 0 5px #00ff00; } /* green - youngin' */
+        .cell-2 { color: #ffff00; text-shadow: 0 0 5px #ffff00; } /* yellow - adultin' */
+        .cell-3 { color: #0000ff; text-shadow: 0 0 5px #0000ff; } /* blue - maturin' */
+        .cell-4 { color: #ff0000; text-shadow: 0 0 5px #ff0000; } /* red - elder */
+
+        #loading {
+            text-align: center;
+            padding: 3rem;
+        }
+
+        .py-loading {
+            display: inline-block;
+            font-size: 1.5rem;
+            color: var(--primary-color);
+            animation: pulse 1.5s infinite;
+        }
+
+        @keyframes pulse {
+            0% { opacity: 0.5; }
+            50% { opacity: 1; }
+            100% { opacity: 0.5; }
+        }
+
+        [py-completed] {
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <main class="container">
+        <h1>Conway's Game of Life</h1>
+        <p>Written in Python! Running with <a href="https://pyscript.net/" target="_blank">PyScript</a>.</p>
+
+        <div id="loading">
+            <div class="py-loading">Loading simulation...</div>
+        </div>
+
+        <div id="game-ui" py-completed>
+            <div id="controls">
+                <div class="control-group">
+                    <div class="button-group">
+                        <button id="start-btn">Start/Stop</button>
+                        <button id="next-step-btn">Next Step</button>
+                        <button id="reset-btn">Reset</button>
+                    </div>
+                </div>
+                <div class="control-group">
+                    <label>Grid Size:</label>
+                    <label>Rows: <input type="number" id="rows" value="50" min="10" max="100"></label>
+                    <label>Columns: <input type="number" id="cols" value="100" min="10" max="200"></label>
+                </div>
+                <div class="control-group">
+                    <label>Delay (ms): <input type="number" id="delay" value="500" min="50" max="5000"></label>
+                    <label>
+                        <input type="checkbox" id="user-input"> Step by step mode
+                    </label>
+                </div>
+            </div>
+            <div id="game-container"></div>
+        </div>
+    </main>
+    <script type="py" src="browser.py" config="pyscript.toml"></script>
+</body>
+</html>
