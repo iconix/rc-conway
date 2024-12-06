@@ -2,4 +2,4 @@ what: polishing off a pair-programmed implementation of conway's game of life in
 
 where: recurse center pairing workshop w1'24
 
-with: annie lydens
+with: annie lydens and cindy wu (great people!)
